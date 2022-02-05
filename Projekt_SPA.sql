@@ -368,6 +368,107 @@
 
 
 ----------------------------------------------------------------------------------------------------------Procedury (3)
+--Procedury
+
+-- 1 Procedura
+--Dodanie usługi
+
+		IF EXISTS(SELECT 1
+		 FROM sys.objects
+		 WHERE name = 'dodaj_usluge')
+		 DROP procedure dodaj_usluge
+
+		go
+		create procedure dodaj_usluge
+		@id_uslugi int,
+		@nazwa varchar(20),
+		@cena int
+		as
+		begin
+			if @id_uslugi is null or @nazwa is null or @cena is null
+				begin
+					print 'Nie podano wszystkich wymaganych parametrów'
+				end
+			if (select id_uslugi from Usluga where id_uslugi = @id_uslugi) = @id_uslugi
+				begin
+					print 'Wprowadze ID znajduje sie juz w bazie, podaj inne ID.'
+				end
+			else 
+				begin
+					insert into Usluga values (@id_uslugi, @nazwa, @cena)
+				end
+		end
+
+		exec dodaj_usluge 13, 'masaż całego ciała', 350
+		select * from Usluga
+
+-- 2 Procedura
+--Dla pracowników pracujących więcej niż 3lata zwiększ wynagrodzenie o x%.
+
+		IF EXISTS(SELECT 1
+		 FROM sys.objects
+		 WHERE name = 'podwyzka')
+		 DROP procedure podwyzka
+
+		go
+
+		create procedure podwyzka
+		@procent float
+		as
+		begin
+			declare @imie varchar(15), @nazwisko varchar(15)
+			declare kursor cursor for
+				select imie, nazwisko from Pracownik where DATEDIFF(year, data_zatrudnienia, GETDATE()) > 4
+
+			open kursor
+			fetch next from kursor into @imie, @nazwisko
+
+			while @@FETCH_STATUS = 0
+			begin
+				update Pracownik set wynagrodzenie = wynagrodzenie + wynagrodzenie*(@procent/100) 
+				print 'Pracownikowi ' + @imie + ' ' + @nazwisko + ' podwyższono wynagrodzenie' 
+				fetch next from kursor into @imie, @nazwisko
+			end
+			close kursor
+			deallocate kursor
+		end
+
+		exec podwyzka 5
+		select * from Pracownik
+
+-- 3 Procedura
+-- Usuwanie klienta
+
+		IF EXISTS(SELECT 1
+		 FROM sys.objects
+		 WHERE name = 'usun_klienta')
+		 DROP procedure usun_klienta
+
+		 go
+		 create procedure usun_klienta
+		 @id int
+		 as
+		 begin
+			declare @imie varchar(15), @nazwisko varchar(15)
+			if (select id_klienta from Klient where id_klienta = @id) = @id
+				begin
+					set @imie = (select imie from Klient where id_klienta = @id)
+					set @nazwisko = (select nazwisko from Klient where id_klienta = @id)
+					delete from Klient where id_klienta = @id
+					print 'Usunieto klienta ' + @imie + ' ' + @nazwisko + ' o ID ' + convert(varchar(3), @id)
+				end
+			else
+				begin
+					print 'Taki klient nie istnieje'
+				end
+		 end
+
+		 insert into Klient values (22, 'Piotr', 'Budzyński', 'budzyn@gmail.com', '675974123')
+
+		 exec usun_klienta 22
+
+
+
 
 ----------------------------------------------------------------------------------------------------------Funkcje  (1)
 
